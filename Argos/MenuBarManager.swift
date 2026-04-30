@@ -20,6 +20,11 @@ class MenuBarManager: NSObject {
         set { UserDefaults.standard.set(newValue, forKey: "interval") }
     }
 
+    private var teamsCompatMode: Bool {
+        get { UserDefaults.standard.bool(forKey: "teamsCompatMode") }
+        set { UserDefaults.standard.set(newValue, forKey: "teamsCompatMode") }
+    }
+
     override init() {
         super.init()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -80,6 +85,17 @@ class MenuBarManager: NSObject {
 
             menu.addItem(NSMenuItem.separator())
 
+            let teamsItem = NSMenuItem(
+                title: "Teams Compatibility Mode",
+                action: #selector(self.toggleTeamsCompat),
+                keyEquivalent: ""
+            )
+            teamsItem.target = self
+            teamsItem.state = self.teamsCompatMode ? .on : .off
+            menu.addItem(teamsItem)
+
+            menu.addItem(NSMenuItem.separator())
+
             let launchAtLoginItem = NSMenuItem(
                 title: "Launch at Login",
                 action: #selector(self.toggleLaunchAtLogin),
@@ -99,6 +115,11 @@ class MenuBarManager: NSObject {
 
     @objc private func toggle() {
         isActive.toggle()
+    }
+
+    @objc private func toggleTeamsCompat() {
+        teamsCompatMode.toggle()
+        updateMenu()
     }
 
     @objc private func setInterval(_ sender: NSMenuItem) {
@@ -146,12 +167,32 @@ class MenuBarManager: NSObject {
     }
 
     private func nudgeCursor() {
-        let point = NSEvent.mouseLocation
-        let screenHeight = NSScreen.main?.frame.height ?? 0
-        let cgPoint = CGPoint(x: point.x, y: screenHeight - point.y)
-        let nudged = CGPoint(x: cgPoint.x + 1, y: cgPoint.y)
-        CGWarpMouseCursorPosition(nudged)
-        CGWarpMouseCursorPosition(cgPoint)
+        guard let currentEvent = CGEvent(source: nil) else { return }
+        let origin = currentEvent.location
+
+        let moved = CGPoint(x: origin.x + 1, y: origin.y + 1)
+        let moveEvent = CGEvent(mouseEventSource: nil, mouseType: .mouseMoved,
+                                mouseCursorPosition: moved, mouseButton: .left)
+        moveEvent?.post(tap: .cghidEventTap)
+
+        Thread.sleep(forTimeInterval: 0.1)
+
+        let returnEvent = CGEvent(mouseEventSource: nil, mouseType: .mouseMoved,
+                                  mouseCursorPosition: origin, mouseButton: .left)
+        returnEvent?.post(tap: .cghidEventTap)
+
+        if teamsCompatMode {
+            postShiftKey()
+        }
+    }
+
+    private func postShiftKey() {
+        let src = CGEventSource(stateID: .hidSystemState)
+        let keyDown = CGEvent(keyboardEventSource: src, virtualKey: 0x38, keyDown: true)
+        let keyUp   = CGEvent(keyboardEventSource: src, virtualKey: 0x38, keyDown: false)
+        keyDown?.post(tap: .cghidEventTap)
+        Thread.sleep(forTimeInterval: 0.05)
+        keyUp?.post(tap: .cghidEventTap)
     }
 }
 
