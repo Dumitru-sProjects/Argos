@@ -32,6 +32,10 @@ jobs:
           cp -R "${{ runner.temp }}/Argos.xcarchive/Products/Applications/Argos.app" \
             "${{ runner.temp }}/Argos.app"
 
+      - name: Ad-hoc Sign
+        run: |
+          codesign --force --deep --sign - "${{ runner.temp }}/Argos.app"
+
       - name: Zip App
         run: |
           cd "${{ runner.temp }}"
