@@ -11,9 +11,17 @@ Argos sits in your menu bar and silently moves your cursor by 1 pixel at regular
 ## Download & Install
 
 1. Go to [GitHub Releases](https://github.com/ZanogeaDumitru/Argos/releases) and download `Argos.app.zip`
-2. Unzip and drag `Argos.app` to your `/Applications` folder
-3. **First launch:** right-click → Open (this bypasses Gatekeeper for unsigned apps)
-4. Go to **System Settings → Privacy & Security → Accessibility** and enable Argos
+2. Unzip the file
+3. Open **Terminal** (press `⌘ Space`, type `Terminal`, press Enter)
+4. Run this command to remove the macOS quarantine flag:
+   ```bash
+   xattr -cr ~/Downloads/Argos.app
+   ```
+5. Drag `Argos.app` to your `/Applications` folder
+6. Double-click to open — macOS will no longer block it
+7. Go to **System Settings → Privacy & Security → Accessibility** and enable Argos
+
+> **Why the Terminal step?** Argos is not signed with an Apple Developer certificate ($99/year). macOS blocks unsigned apps downloaded from the internet by default. The `xattr -cr` command removes that restriction — it's safe and standard practice for open source apps.
 
 > Argos needs Accessibility permission to move the cursor. Without it, the app will prompt you automatically.
 
