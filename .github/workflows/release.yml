@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Archive
+        run: |
+          xcodebuild archive \
+            -project Argos.xcodeproj \
+            -scheme Argos \
+            -configuration Release \
+            -archivePath ${{ runner.temp }}/Argos.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Export App
+        run: |
+          cp -R "${{ runner.temp }}/Argos.xcarchive/Products/Applications/Argos.app" \
+            "${{ runner.temp }}/Argos.app"
+
+      - name: Zip App
+        run: |
+          cd "${{ runner.temp }}"
+          zip -r Argos.app.zip Argos.app
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ runner.temp }}/Argos.app.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
